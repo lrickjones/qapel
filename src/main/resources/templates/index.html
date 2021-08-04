@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <title>Sales Manager Application</title>
+</head>
+<body>
+<div>
+    <h2>Tags in DB</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Reader</th>
+            <th>EPC</th>
+            <th>Antenna</th>
+            <th>First Read</th>
+            <th>Last Read</th>
+            <th>Number Reads</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="tag : ${tagList}">
+            <td th:text="${tag.readerName}">Text ...</td>
+            <td th:text="${tag.epc}">Text ...</td>
+            <td th:text="${tag.antenna}">Text ...</td>
+            <td th:text="${tag.firstRead}">Text...</td>
+            <td th:text="${tag.lastRead}">Text...</td>
+            <td th:text="${tag.numReads}">Text...</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <! – META SECTION – >
+    <title>Spring Framework Guru JdbcTemplate, Thymeleaf, JPA Example</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <! – END META SECTION – >
+    <! –  BEGIN STYLE – >
+    <style>
+table, th, td {
+    border: 1px solid black;
+    padding: 1px;
+}
+</style>
+    <! –  END STYLE – >
+</head>
+<body>
+<div>
+    <h2>Tags in DB</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Reader</th>
+            <th>EPC</th>
+            <th>Antenna</th>
+            <th>First Read</th>
+            <th>Last Read</th>
+            <th>Number Reads</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="tag : ${tags}">
+            <td th:text="${tag.readerName}">Text ...</td>
+            <td th:text="${tag.epc}">Text ...</td>
+            <td th:text="${tag.antenna}">Text ...</td>
+            <td th:text="${tag.firstRead}">Text...</td>
+            <td th:text="${tag.lastRead}">Text...</td>
+            <td th:text="${tag.numReads}">Text...</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<! –  begin form for finding at risk dogs – >
+<h2>List Recorded Tags</h2>
+<form action="#" th:action="@{/all_tags}" th:object="${search}">
+    <label for="search_input">Search:</label> <input name="search"
+                                                     id="search"  >
+</input>
+    <div th:if="${not #lists.isEmpty(search)}">
+        <h3>Search Results Of At Risk Dogs</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Reader</th>
+                <th>EPC</th>
+                <th>Antenna</th>
+                <th>First Read</th>
+                <th>Last Read</th>
+                <th>Number Reads</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="tag : ${tags}">
+                <td th:text="${tag.readerName}">Text ...</td>
+                <td th:text="${tag.epc}">Text ...</td>
+                <td th:text="${tag.antenna}">Text ...</td>
+                <td th:text="${tag.firstRead}">Text...</td>
+                <td th:text="${tag.lastRead}">Text...</td>
+                <td th:text="${tag.numReads}">Text...</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</form>
+<div>
+    <h2>Add A Dog</h2>
+    <form action="#" th:action="@{/}" method="post">
+        <label>Name<input type="text" name="name" id="name"></input></label>
+        <label>Vaccinated<input type="text" name="vaccinated" id="vaccinated"></input></label>
+        <label>Rescued<input type="text" name="rescued" id="rescued"></input></label>
+        <input type="submit" value="Submit"></input>
+    </form>
+</div>
+<div>
+    <h2>Delete A Dog</h2>
+    <form action="/delete" th:action="@{/delete}" method="post">
+        <label>Name<input type="text" name="name" id="name"></input></label>
+        <label>ID<input type="text" name="id" id="id"></input></label>
+        <input type="submit" value="Submit"></input>
+    </form>
+</div>
+<div>
+    <h2>Return Generated Key When Adding A Dog</h2>
+    <form action="/genkey" th:action="@{/genkey}" method="post">
+        <label>Name<input type="text" name="name" id="name"></input></label>
+        <label>Vaccinated<input type="text" name="vaccinated" id="vaccinated"></input></label>
+        <label>Rescued<input type="text" name="rescued" id="rescued"></input></label>
+        <input type="submit" value="Submit"></input>
+    </form>
+</div>
+</body>
+</html>
