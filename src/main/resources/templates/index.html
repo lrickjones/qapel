@@ -2,34 +2,68 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:th="http://www.thymeleaf.org">
 <head>
+    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/5.0.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.0.2/css/bootstrap.min.css" />
+    <style>
+        .table-fixed tbody {
+            height: 600px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .table-fixed thead,
+        .table-fixed tbody,
+        .table-fixed tr,
+        .table-fixed td,
+        .table-fixed th {
+            display: block;
+        }
+
+        .table-fixed tbody td,
+        .table-fixed tbody th,
+        .table-fixed thead > tr > th {
+            float: left;
+            position: relative;
+
+            &::after {
+                content: '';
+                clear: both;
+                display: block;
+            }
+        }
+            </style>
     <meta charset="utf-8"/>
-    <title>Sales Manager Application</title>
+    <title>All Read Tags Query</title>
 </head>
 <body>
-<div>
-    <h2>Tags in DB</h2>
-    <table>
+
+<h1 class="text-primary">Tags in DB</h1>
+<div class="container
+table-responsive w-80">
+    <table class="table table-fixed table-striped table-secondary">
         <thead>
         <tr>
-            <th>Reader</th>
-            <th>EPC</th>
-            <th>Antenna</th>
-            <th>First Read</th>
-            <th>Last Read</th>
-            <th>Number Reads</th>
+            <th scope="col" class="col-3">Reader</th>
+            <th scope="col" class="col-3">EPC</th>
+            <th scope="col" class="col-1">Antenna</th>
+            <th scope="col" class="col-2">First Read</th>
+            <th scope="col" class="col-2">Last Read</th>
+            <th scope="col" class="col-1">Number Reads</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="tag : ${tagList}">
-            <td th:text="${tag.readerName}">Text ...</td>
-            <td th:text="${tag.epc}">Text ...</td>
-            <td th:text="${tag.antenna}">Text ...</td>
-            <td th:text="${tag.firstRead}">Text...</td>
-            <td th:text="${tag.lastRead}">Text...</td>
-            <td th:text="${tag.numReads}">Text...</td>
+            <th scope="row" th:text="${tag.readerName}" class="col-3">Text ...</th>
+            <td th:text="${tag.epc}" class="col-3">Text ...</td>
+            <td th:text="${tag.antenna}" class="col-1">Text ...</td>
+            <td th:text="${tag.firstRead}" class="col-2">Text...</td>
+            <td th:text="${tag.lastRead}" class="col-2">Text...</td>
+            <td th:text="${tag.numReads}" class="col-1">Text...</td>
         </tr>
         </tbody>
     </table>
 </div>
 </body>
+
 </html>
