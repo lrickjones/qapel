@@ -8,5 +8,6 @@
     <dwr:annotation-scan scanRemoteProxy="false" base-package="com.dwr.test"/>
     <dwr:configuration>
         <dwr:convert type="bean" class="com.qapel.rfid.MyBean"></dwr:convert>
+        <dwr:convert type="bean" class="com.qapel.rfid.db.Tag"></dwr:convert>
     </dwr:configuration>
 </beans>

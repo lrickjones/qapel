@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/5.0.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.0.2/css/bootstrap.min.css" />
+    <title>Login page</title>
+</head>
+<body>
+<section class="vh-100">
+    <div class="container py-5 h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col col-xl-10">
+                <div class="card" style="border-radius: 1rem;">
+                    <div class="row g-0">
+                        <div class="col-md-6 col-lg-5 d-none d-md-block">
+                            <img
+                                    src="image/login-image.jpg"
+                                    alt="login form"
+                                    class="img-fluid" style="border-radius: 1rem 0 0 1rem;"
+                            />
+                        </div>
+                        <div class="col-md-6 col-lg-7 d-flex align-items-center">
+                            <div class="card-body p-4 p-lg-5 text-black">
+
+                                <form th:action="@{/login}" method="post">
+
+                                    <div class="d-flex align-items-center mb-3 pb-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 80">
+                                            <defs>
+                                                <style>
+                                                    .cls-1{fill:#0e6bee;}
+                                                </style>
+                                            </defs>
+                                            <g id="Layer_2" data-name="Layer 2">
+                                                <g id="Layer_1-2" data-name="Layer 1">
+                                                    <path class="cls-1" d="M122.85,76H111.22V15.62h10.11l.75,
+                                                    4.45a13.4,13.4,0,0,1,5.81-4.17,18.59,18.59,0,0,1,6.51-1.21c10.76,
+                                                    0,19.19,9.51,19.19,21.65,0,12-8.46,21.34-19.26,21.34a18.2,18.2,0,0,
+                                                    1-6.41-1.14,14.4,14.4,0,0,1-5.07-3.16V76Zm0-46.06V43.44a11.19,11.19,
+                                                    0,0,0,9,4.15c4.75,0,9.86-3.61,9.86-11.56,
+                                                    0-5.45-3.4-11.25-9.71-11.25a10.25,10.25,0,0,0-9.17,
+                                                    5.13ZM16.37,56.23a27.73,27.73,0,1,1,38-17.43,30,30,0,0,
+                                                    0-13.25-.52,15.21,15.21,0,1,0-9.48,7.41l0,.07,
+                                                    1.1-.4.44-.16.29-.11a27.58,27.58,0,0,1,31.16,8.62L51.7,58.61a15.31,
+                                                    15.31,0,0,0-14.11-1.74,27.55,27.55,0,0,
+                                                    1-21.22-.64ZM156.85,36.65a22.45,22.45,0,0,1,6-15.63,21,21,0,0,1,
+                                                    29.09-.92,18.6,18.6,0,0,1,5.66,13.63,29.42,29.42,0,0,1-.54,
+                                                    5.21l-.06.29H168.68A11.32,11.32,0,0,0,172,45.8a9.32,9.32,0,0,0,6.44,
+                                                    2.41c5.21,0,7.78-2.24,10.23-5.84l.2-.3,7.74,5.25-.2.3c-4.93,
+                                                    7.15-10.36,10.07-18.74,10.07C165.4,57.68,156.85,49,156.85,
+                                                    36.65Zm12.42-5.58h16.45a7.76,7.76,0,0,0-2.38-5.17,7.62,7.62,0,0,
+                                                    0-5.31-2C175,23.94,171,25.17,169.27,31.07ZM70.15,44.49A11.58,11.58,
+                                                    0,0,1,76,33.93c3.92-2.37,8.75-2.86,12.12-2.86a35.3,35.3,0,0,1,7,
+                                                    .76v-.18c0-5.38-2.36-7.79-7.64-7.79-4.75,0-8.93,
+                                                    1.87-12,3.5l-.36.19L71.82,19l.29-.14A40.44,40.44,0,0,1,89.64,
+                                                    14.7c11,0,17,6.18,17,17.42V56.76H96.58l-.74-3.06c-2.43,2.64-6.07,
+                                                    4-10.81,4C77.63,57.68,70.15,53.15,70.15,44.49Zm11.4-.15c0,
+                                                    3.47,2.91,5,5.79,5a11.42,11.42,0,0,0,7.71-3.26v-7a24.37,
+                                                    24.37,0,0,0-5.18-.62c-2,0-8.33.42-8.33,5.87ZM201.36,
+                                                    56.76v-54H213v54ZM58.61,17.83l.36-.55a21.56,21.56,0,0,0,
+                                                    2.45-5.4A6.49,6.49,0,0,1,67.58.52c2.43.89,4,3.24,4,6.33,0,4.41-2.51,
+                                                    9.3-6.89,13.4l-.28.26Z">
+                                                    </path>
+                                                </g>
+                                            </g>
+                                        </svg>
+                                    </div>
+
+                                    <h5 class="fw-normal mb-3 pb-3" style="letter-spacing: 1px;">Sign in</h5>
+                                    <p th:if="${loginError}" class="error">Wrong user or password</p>
+
+                                    <div class="form-outline mb-4">
+                                        <input type="text" id="username" name="username" class="form-control form-control-lg" autofocus="autofocus"/>
+                                        <label class="form-label" for="username">User Name</label>
+                                    </div>
+
+                                    <div class="form-outline mb-4">
+                                        <input type="password" id="password" name="password" class="form-control form-control-lg" />
+                                        <label class="form-label" for="password">Password</label>
+                                    </div>
+
+                                    <div class="pt-1 mb-4">
+                                        <button class="btn btn-dark btn-lg btn-block" type="submit" value="Log in">Login</button>
+                                    </div>
+
+                                    <a class="small text-muted" href="#!">Forgot password?</a>
+                                    <p class="mb-5 pb-lg-2" style="color: #393f81;">Don't have an account? <a href="#!" style="color: #393f81;">Register here</a></p>
+                                    <a href="#!" class="small text-muted">Terms of use.</a>
+                                    <a href="#!" class="small text-muted">Privacy policy</a>
+                                </form>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+    <!--h1>Login page</h1>
+    <p th:if="${loginError}" class="error">Wrong user or password</p>
+    <form th:action="@{/login}" method="post">
+        <label for="username">Username</label>:
+        <input type="text" id="username" name="username" autofocus="autofocus" /> <br />
+        <label for="password">Password</label>:
+        <input type="password" id="password" name="password" /> <br />
+        <input type="submit" value="Log in" />
+    </form-->
+</body>
+</html>

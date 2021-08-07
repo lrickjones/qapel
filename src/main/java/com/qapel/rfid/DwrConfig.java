@@ -23,4 +23,5 @@ public class DwrConfig {
         registrationBean.addInitParameter("maxWaitAfterWrite", "60");
         return registrationBean;
     }
+
 }

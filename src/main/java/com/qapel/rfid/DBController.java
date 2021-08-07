@@ -28,9 +28,11 @@ public class DBController {
     String view = "SELECT * FROM tags";
 
     @PostMapping("/test")
-    public void test() throws Exception {
+    public String test() throws Exception {
         int result = jdbcTemplate.update(sql, "test1", "0000-0000", 1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 4);
+        ReverseClass.enqueue(new Tag("test1","00002341234",1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 4));
         System.out.println(result + " rows added.");
+        return "add_tag";
     }
 
     @PostMapping("/add_tag")
@@ -58,12 +60,12 @@ public class DBController {
                 int readNum = 0;
 
                 int result = jdbcTemplate.update(sql, readerName, edc, antenna, firstRead, lastRead, readNum);
-                System.out.println(result + " rows added.");
+                ReverseClass.enqueue(new Tag(readerName, edc,antenna, firstRead, lastRead, readNum));
             }
         }
         return "add_tag";
     }
-    @GetMapping("/")
+    @GetMapping("/home/homeSignedIn")
     public String allTags(Model model) {
 
         List<Tag> tagList = new ArrayList();
@@ -77,8 +79,7 @@ public class DBController {
             return tagList;
         });
         model.addAttribute("tagList", tagList);
-        System.out.println("num rows = " + tagList.size());
-        return "index";
+        return "/home/homeSignedIn";
     }
 
 }

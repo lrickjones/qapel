@@ -16,4 +16,9 @@ public class Tag {
     Timestamp firstRead;
     Timestamp lastRead;
     int numReads;
+
+    public Tag(String epc) {
+        this.epc = epc;
+        System.out.println(epc + " read");
+    }
 }
