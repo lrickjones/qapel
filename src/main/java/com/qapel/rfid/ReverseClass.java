@@ -25,8 +25,11 @@ public class ReverseClass {
      * for loop completes
      */
     @RemoteMethod
-    public void callReverseDWR() {
+    public String callReverseDWR() {
         //System.out.println("Ur in callReverseDWR");
+        if (tagQueue.isEmpty()) return "";
+        return update();
+        /*
         try {
             while (!shutdown) {
                 update();
@@ -40,32 +43,36 @@ public class ReverseClass {
             //System.out.println("Error in callReverseDWR");
             e.printStackTrace();
         }
+        */
     }
 
     /**
      * This method updates ReversePage.jsp &lt;ul id=&quot;updates&quot;&gt;
      * using dwr reverse ajax
      */
-    public void update() {
+    public String update() {
+        String result = "";
         while (!tagQueue.isEmpty()) {
             try {
                 Tag t = tagQueue.poll();
                 if (t != null) {
                     //List<MyBean> messages = new ArrayList<>();
                     //messages.add(new MyBean("<div class='h2'>" + t.getEpc() + " read</div>"));
-                    Util.setValue("read_tags", "<i>" + t.getEpc() + " read " + count++ + "</i>");
-                    if (count%2==0) {
+                    Util.setValue("read_tags", t.getEpc() + " read ");
+                    if (++count%2==0) {
                         Util.setClassName("read_tags", "h1 p4 m4 bg-success");
+                        result = "/sound/pass.mp3";
                     } else {
                         Util.setClassName("read_tags", "h1 p4 m4 bg-danger");
+                        result = "/sound/fail.mp3";
                     }
                     //Util.addOptions("updates", messages, "value");
                 }
             } catch (Exception e) {
-                System.out.println("Error in Update");
                 e.printStackTrace();
             }
         }
+        return result;
     }
 
     public static void enqueue(Tag t) {
