@@ -1,5 +1,6 @@
 package com.qapel.rfid;
 
+import com.qapel.rfid.db.Station;
 import com.qapel.rfid.db.Tag;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -24,12 +26,13 @@ public class DBController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    String sql = "INSERT INTO tags (Reader_Name, EPC, Antenna, First_Read, Last_Read, Num_Reads) VALUES (?,?,?,?,?,?)";
-    String view = "SELECT * FROM tags";
+    String insert_tag = "INSERT INTO tags (Reader_Name, EPC, Antenna, First_Read, Last_Read, Num_Reads) VALUES (?,?,?,?,?,?)";
+    String view = "SELECT * FROM reader.tags";
+    String lookup_station = "SELECT * FROM reader.station";
 
     @PostMapping("/test")
     public String test() throws Exception {
-        int result = jdbcTemplate.update(sql, "test1", "0000-0000", 1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 4);
+        int result = jdbcTemplate.update(insert_tag, "test1", "0000-0000", 1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 4);
         ReverseClass.enqueue(new Tag("test1","00002341234",1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 4));
         System.out.println(result + " rows added.");
         return "add_tag";
@@ -59,14 +62,14 @@ public class DBController {
                 Timestamp lastRead = new Timestamp(elapsed);
                 int readNum = 0;
 
-                int result = jdbcTemplate.update(sql, readerName, edc, antenna, firstRead, lastRead, readNum);
+                int result = jdbcTemplate.update(insert_tag, readerName, edc, antenna, firstRead, lastRead, readNum);
                 ReverseClass.enqueue(new Tag(readerName, edc,antenna, firstRead, lastRead, readNum));
             }
         }
         return "add_tag";
     }
     @GetMapping("/home/homeSignedIn")
-    public String allTags(Model model) {
+    public String allTags(@RequestParam(required = false) String id, Model model) {
 
         List<Tag> tagList = new ArrayList();
         jdbcTemplate.query(view, (ResultSetExtractor<Object>) rs -> {
@@ -81,5 +84,4 @@ public class DBController {
         model.addAttribute("tagList", tagList);
         return "/home/homeSignedIn";
     }
-
 }

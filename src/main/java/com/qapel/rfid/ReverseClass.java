@@ -7,8 +7,6 @@ import org.directwebremoting.ui.dwr.Util;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -26,24 +24,8 @@ public class ReverseClass {
      */
     @RemoteMethod
     public String callReverseDWR() {
-        //System.out.println("Ur in callReverseDWR");
         if (tagQueue.isEmpty()) return "";
         return update();
-        /*
-        try {
-            while (!shutdown) {
-                update();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    System.out.println("Sleep interrupted");
-                }
-            }
-        } catch (Exception e) {
-            //System.out.println("Error in callReverseDWR");
-            e.printStackTrace();
-        }
-        */
     }
 
     /**
@@ -56,17 +38,14 @@ public class ReverseClass {
             try {
                 Tag t = tagQueue.poll();
                 if (t != null) {
-                    //List<MyBean> messages = new ArrayList<>();
-                    //messages.add(new MyBean("<div class='h2'>" + t.getEpc() + " read</div>"));
                     Util.setValue("read_tags", t.getEpc() + " read ");
                     if (++count%2==0) {
-                        Util.setClassName("read_tags", "h1 p4 m4 bg-success");
+                        Util.setClassName("read_tags", "h1 p-4 m-4 border border-success rounded bg-success");
                         result = "/sound/pass.mp3";
                     } else {
-                        Util.setClassName("read_tags", "h1 p4 m4 bg-danger");
+                        Util.setClassName("read_tags", "h1 p-4 m-4 border border-danger rounded bg-danger");
                         result = "/sound/fail.mp3";
                     }
-                    //Util.addOptions("updates", messages, "value");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
