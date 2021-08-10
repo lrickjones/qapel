@@ -26,6 +26,7 @@
                     <div class="row">
                         <div class="form-group col-md-8">
                             <label for="name" class="col-form-label">Name</label> <input type="text" th:field="*{name}" class="form-control" id="name" placeholder="Name"> <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-danger"></span>
+                            <label for="station_order" class="col-form-label">Station Order</label> <input type="number" th:field="*{station_order}" class="form-control" id="station_order" placeholder="Name"> <span th:if="${#fields.hasErrors('station_order')}" th:errors="*{station_order}" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6">

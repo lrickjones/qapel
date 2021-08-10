@@ -1,4 +1,4 @@
-package com.qapel.rfid.db;
+package com.qapel.rfid.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -20,13 +20,15 @@ public class Station {
     @Column(name="name")
     private String name;
 
-    @Column(name = "ip")
-    private String ip;
+    @NotBlank(message = "Station order is mandatory")
+    @Column(name = "station_order")
+    private int station_order;
 
     public Station() {}
 
-    public Station(String name) {
+    public Station(String name, int station_order) {
         this.name = name;
+        this.station_order = station_order;
     }
 
     public int getId() {
@@ -45,11 +47,11 @@ public class Station {
         this.name = name;
     }
 
-    public String getIp() {
-        return ip;
+    public int getStation_order() {
+        return station_order;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip;
+    public void setStation_order(int station_order) {
+        this.station_order = station_order;
     }
 }

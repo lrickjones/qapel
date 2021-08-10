@@ -1,6 +1,6 @@
 package com.qapel.rfid;
 
-import com.qapel.rfid.db.Station;
+import com.qapel.rfid.entities.Station;
 import com.qapel.rfid.repository.StationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -9,6 +9,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequestMapping("/station/")
 abstract class BaseStationController {
@@ -22,7 +26,6 @@ abstract class BaseStationController {
 
 
 @Controller
-
 public class StationController extends BaseStationController {
 
 
@@ -37,7 +40,10 @@ public class StationController extends BaseStationController {
 
     @GetMapping("list")
     public String showUpdateForm(Model model) {
-        model.addAttribute("stations", stationRepository.findAll());
+        // sort stations by station_order value
+        List<Station> stationList = stationRepository.findAll().stream()
+                .sorted(Comparator.comparingInt(Station::getStation_order)).collect(Collectors.toList());
+        model.addAttribute("stations", stationList);
         return "/station/index";
     }
 
@@ -72,9 +78,8 @@ public class StationController extends BaseStationController {
 
     @GetMapping("delete/{id}")
     public String deleteStation(@PathVariable("id") int id, Model model) {
-        Station station = stationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid student Id: " + id));
-        stationRepository.delete(station);
+        Optional<Station> station = stationRepository.findById(id);
+        station.ifPresent(stationRepository::delete);
         model.addAttribute("stations", stationRepository.findAll());
         return "/station/index";
     }
@@ -106,4 +111,5 @@ class RestStationController extends BaseStationController {
             return station.getName();
         }
     }
+
 }

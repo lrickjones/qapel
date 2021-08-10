@@ -19,33 +19,38 @@
     <div th:replace="fragments/header :: header"></div>
     <div class="card">
         <div class="card-body">
-            <div th:switch="${stations}" class="container my-5">
+            <div th:switch="${readerConfigurations}" class="container my-5">
                 <div class="col-md-10">
 
-                    <h2 th:case="null">No stations yet!</h2>
+                    <h2 th:case="null">No reader configurations yet!</h2>
                     <div th:case="*">
                         <table class="table table-striped table-responsive-md">
                             <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Station Order</th>
+                                <th>Station</th>
+                                <th>Order</th>
+                                <th>Reader Name</th>
+                                <th>Antenna</th>
+                                <th>Status</th>
                             </tr>
                             </thead>
                             <tbody>
-                            <tr th:each="station: ${stations}">
-                                <td th:text="${station.name}">Text ...</td>
-                                <td th:text="${station.station_order}">Text ...</td>
-                                <td><a th:href="@{/station/edit/{id}(id=${station.id})}" class="btn btn-primary"><i class="fas fa-edit ml-2"></i></a></td>
-                                <td><a th:href="@{/station/delete/{id}(id=${station.id})}" class="btn btn-primary"><i class="fas fa-times ml-2"></i></a></td>
+                            <tr th:each="readerConfiguration: ${readerConfigurations}">
+                                <td th:text="${readerConfiguration.station.name}">Text ...</td>
+                                <td th:text="${readerConfiguration.station.station_order}">Text ...</td>
+                                <td th:text="${readerConfiguration.reader_name}">Text ...</td>
+                                <td th:text="${readerConfiguration.antenna}">Text ...</td>
+                                <td th:text="${readerConfiguration.status}">Text ...</td>
+                                <td><a th:href="@{/readerConfiguration/edit/{id}(id=${readerConfiguration.id})}" class="btn btn-primary"><i class="fas fa-edit ml-2"></i></a></td>
+                                <td><a th:href="@{/readerConfiguration/delete/{id}(id=${readerConfiguration.id})}" class="btn btn-primary"><i class="fas fa-times ml-2"></i></a></td>
                             </tr>
                             </tbody>
                         </table>
                     </div>
-
                 </div>
                 <p class="my-5">
-                    <a href="/station/new" class="btn btn-primary"><i
-                            class="fas fa-plus ml-2"> Add Station</i></a>
+                    <a href="/readerConfiguration/new" class="btn btn-primary"><i
+                            class="fas fa-plus ml-2"> Add Configuration</i></a>
                 </p>
             </div>
         </div>

@@ -1,6 +1,6 @@
 package com.qapel.rfid.repository;
 
-import com.qapel.rfid.db.Station;
+import com.qapel.rfid.entities.Station;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

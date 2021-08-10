@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Update User</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/5.0.2/js/bootstrap.min.js"></script>
+    <script type='text/javascript' src='/js/qapel.js'></script>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.0.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/qapel.css" />
+    <link rel="stylesheet" href="/webjars/font-awesome/5.15.3/css/all.min.css" />
+</head>
+<body>
+<div class="container my-5">
+    <div th:replace="fragments/header :: header"></div>
+    <h3> Update Station</h3>
+    <div class="card">
+        <div class="card-body">
+            <div class="col-md-8">
+                <form action="#" th:action="@{/readerConfiguration/update/{id}(id=${readerConfiguration.id})}" th:object="${readerConfiguration}" method="post">
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <div class="form-group row mx-1">
+                                <select class="form-control" id="station_id" name="station_id" th:field="*{station_id}">
+                                    <option th:each="stat: ${stations}"
+                                            th:value="${stat.id}"
+                                            th:text="${stat.name}"/>
+                                </select>
+                            </div>
+                            <label for="reader_name" class="col-form-label">Reader Name</label> <input type="text" th:field="*{reader_name}" class="form-control" id="reader_name" placeholder="Name"> <span th:if="${#fields.hasErrors('reader_name')}" th:errors="*{reader_name}" class="text-danger"></span>
+                            <label for="antenna" class="col-form-label">Antenna</label> <input type="text" th:field="*{antenna}" class="form-control" id="antenna" placeholder="Name"> <span th:if="${#fields.hasErrors('antenna')}" th:errors="*{antenna}" class="text-danger"></span>
+                            <label for="status" class="col-form-label">Status</label> <input type="text" th:field="*{status}" class="form-control" id="status" placeholder="Name"> <span th:if="${#fields.hasErrors('status')}" th:errors="*{status}" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group col-md-8">
+                            <input type="submit" class="btn btn-primary" value="Update Reader Configuration">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div th:replace="fragments/footer :: footer">&copy; 2016 The Static Templates</div>
+</div>
+</body>
+
+</html>

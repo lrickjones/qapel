@@ -1,12 +1,11 @@
 package com.qapel.rfid;
 
-import com.qapel.rfid.db.Tag;
+import com.qapel.rfid.entities.Tag;
 import org.directwebremoting.annotations.RemoteMethod;
 import org.directwebremoting.annotations.RemoteProxy;
 import org.directwebremoting.ui.dwr.Util;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PreDestroy;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -14,8 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 @RemoteProxy
 public class ReverseClass {
 
-    private static Queue<Tag> tagQueue = new LinkedBlockingQueue<>();
-    private static boolean shutdown = false;
+    private static final Queue<Tag> tagQueue = new LinkedBlockingQueue<>();
 
     private int count = 0;
     /**
@@ -58,8 +56,4 @@ public class ReverseClass {
         tagQueue.add(t);
     }
 
-    @PreDestroy
-    public void destroy() {
-        shutdown = true;
-    }
 }

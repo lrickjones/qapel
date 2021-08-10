@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class DwrConfig {
     /**
      * Join the DWR servlet, which is equivalent to configuring in xml
-     * @return
+     * @return registrationBean
      */
     @Bean
     public ServletRegistrationBean servletRegistrationBean() {

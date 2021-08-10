@@ -1,4 +1,4 @@
-package com.qapel.rfid.db;
+package com.qapel.rfid.entities;
 
 import lombok.*;
 
