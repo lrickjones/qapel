@@ -1,6 +1,7 @@
 package com.qapel.rfid;
 
 import com.qapel.rfid.entities.Tag;
+import lombok.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 public class DBController {
@@ -25,13 +28,16 @@ public class DBController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    String insert_tag = "INSERT INTO tags (Reader_Name, EPC, Antenna, First_Read, Last_Read, Num_Reads) VALUES (?,?,?,?,?,?)";
-    String view = "SELECT * FROM reader.tags";
+    private final Map<String,Integer> stationIdMapper = new ConcurrentHashMap<>();
+
+    static final String insert_tag = "INSERT INTO tags (Reader_Name, EPC, Antenna, First_Read, Last_Read, Num_Reads) VALUES (?,?,?,?,?,?)";
+    static final String view = "SELECT * FROM reader.tags";
+    static final String readerName2StationId = "SELECT DISTINCT reader_name, station_id from reader.stations";
 
     @PostMapping("/test")
-    public String test() {
+    public String test(@RequestParam int id) {
         int result = jdbcTemplate.update(insert_tag, "test1", "0000-0000", 1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 4);
-        ReverseClass.enqueue(new Tag("test1","00002341234",1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 4));
+        ReverseClass.enqueue(id, new Tag("test1","00002341234",1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 4));
         System.out.println(result + " rows added.");
         return "add_tag";
     }
@@ -59,16 +65,27 @@ public class DBController {
                 Timestamp firstRead = new Timestamp(elapsed);
                 Timestamp lastRead = new Timestamp(elapsed);
                 int readNum = 0;
-
                 jdbcTemplate.update(insert_tag, readerName, edc, antenna, firstRead, lastRead, readNum);
-                ReverseClass.enqueue(new Tag(readerName, edc,antenna, firstRead, lastRead, readNum));
+                Integer station_id = stationIdMapper.get(readerName);
+                if (station_id != null) {
+                    ReverseClass.enqueue(station_id, new Tag(readerName, edc, antenna, firstRead, lastRead, readNum));
+                }
             }
         }
         return "add_tag";
     }
     @GetMapping("/home/homeSignedIn")
     public String allTags(@RequestParam(required = false) String id, Model model) {
-
+        if (stationIdMapper.isEmpty()) {
+            jdbcTemplate.query(readerName2StationId, (ResultSetExtractor<Object>) rs -> {
+                while (rs.next()) {
+                    int station_id = rs.getInt("station_id");
+                    String reader_name = rs.getString("reader_name");
+                    stationIdMapper.put(reader_name,station_id);
+                }
+                return stationIdMapper;
+            });
+        }
         List<Tag> tagList = new ArrayList<>();
         jdbcTemplate.query(view, (ResultSetExtractor<Object>) rs -> {
             while (rs.next()) {

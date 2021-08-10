@@ -25,7 +25,8 @@
         }
 
         function poll() {
-            ReverseClass.callReverseDWR({
+            let stationId = getCookie("station_id");
+            ReverseClass.callReverseDWR(stationId, {
                 callback:function(result) {
                     if (result.length > 0) {
                         play(result);
