@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/5.0.2/js/bootstrap.min.js"></script>
+    <script type='text/javascript' src='/dwr/engine.js'></script>
+    <script type='text/javascript' src='/dwr/interface/ReverseClass.js'></script>
+    <script type='text/javascript' src='/dwr/util.js'></script>
+    <script type='text/javascript' src='/js/qapel.js'></script>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.0.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/qapel.css">
+    <link rel="stylesheet" href="/webjars/font-awesome/5.15.3/css/all.css" />
+    <script language="javascript">
+
+        $( document ).ready(function() {
+            getStation();
+        });
+
+        function start() {
+            document.getElementById("controlBtn").innerHTML = "<i class='fas fa-solid fa-pulse'></i><span class='ms-2'>Waiting...</span>";
+            startPolling();
+        }
+
+        function startPolling() {
+            setTimeout(poll, 1000);
+        }
+
+        function poll() {
+            let stationId = getCookie("station_id");
+            ReverseClass.callReverseDWR(stationId, {
+                callback:function(result) {
+                    if (result.length > 0) {
+                        play(result);
+                    }
+                    startPolling();
+                },
+                timeout:2000,
+                errorHandler:function(message) { alert(message + ": try reloading page"); }
+            });
+        }
+    </script>
+</head>
+
+<body onload="highlightActive()">
+
+    <div class="container">
+        <div th:replace="fragments/header :: header">
+        </div>
+        <div class="border border-secondary rounded my-4 p-4>">
+            <div class="row">
+                <div class = "d-flex col-4 align-items-center justify-content-center">
+                    <div id="stationName" class="d-flex h1 text-secondary">
+                        No Station Assigned
+                    </div>
+                </div>
+                <div class="col-8">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col-6">Reader</th>
+                            <th scope="col-3">Antenna</th>
+                            <th scope="col-3">Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="station : ${stationList}">
+                            <td th:text="${station.readerName}">Text ...</td>
+                            <td th:text="${station.antenna}">Text ...</td>
+                            <td th:text="${station.status}">Text ...</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class = "d-flex justify-content-center">
+                <hr/>
+                <div id="read_tags">
+                    <a href="#" onclick="start()" class="btn btn-primary h1 p-4 m-4" id="controlBtn">
+                        <i class="fas fa-solid fa-play"></i><span class="ms-2">Start Reading</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class = "d-flex justify-content-end">
+            <div>
+                <a th:href="@{/station/select}" class="btn btn-primary h1 p-4 m-4">
+                    <i class="fas fa-solid fa-arrow-alt-circle-up"></i><span class="ms-2">Change Station</span>
+                </a>
+            </div>
+        </div>
+
+        <div th:replace="fragments/footer :: footer">&copy; 2016 The Static Templates</div>
+    </div>
+
+
+</body>
+
+</html>

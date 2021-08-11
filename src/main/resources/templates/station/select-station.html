@@ -34,7 +34,7 @@
                             <tr th:each="station: ${stations}">
                                 <td th:text="${station.name}">Text ...</td>
                                 <td th:text="${station.station_order}">Text ...</td>
-                                <td><a th:href="@{/home/homeSignedIn/(id=${station.id})}" class="btn btn-primary"><i class="fas fa-check ml-2"></i></a></td>
+                                <td><a th:href="@{/tag/monitor(id=${station.id})}" class="btn btn-primary"><i class="fas fa-check ml-2"></i></a></td>
                             </tr>
                             </tbody>
                         </table>

@@ -32,6 +32,7 @@
 
     function showCookieFail(){
       alert("Enable cookies to store station information.")
+      return false;
     }
 
     function play(path) {
@@ -43,7 +44,8 @@
         setCookie("station_id", id)
     }
 
-    function getStation(callback) {
+    function getStation() {
+        // try to get station from cookie
         let station_id = "0";
         if (checkCookie) {
             station_id = getCookie("station_id");
@@ -51,11 +53,12 @@
         station_id = parseInt(station_id);
         // check for integer value greater than 0
         if (Number.isInteger(station_id) && (station_id > 0)) {
+            // look up station name and update template
             $.get("/station/find?id=" + station_id, function (name) {
                 document.getElementById("stationName").innerHTML = name;
-                callback();
             });
         } else {
+            // if there is not station id redirect to page to select a station id
             window.location.replace("/station/select");
         }
     }

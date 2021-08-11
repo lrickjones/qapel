@@ -12,7 +12,7 @@ public class HTMLController {
 
     @GetMapping("/")
     String index(Principal principal) {
-        return principal != null ? "redirect:/home/homeSignedIn" : "login";
+        return principal != null ? "redirect:/tag/monitor" : "login";
     }
 
     // Login form
