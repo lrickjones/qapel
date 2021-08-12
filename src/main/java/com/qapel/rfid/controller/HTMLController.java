@@ -1,12 +1,13 @@
-package com.qapel.rfid;
+package com.qapel.rfid.controller;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.security.Principal;
 
-//@Controller
+@Controller
 public class HTMLController {
 
     @GetMapping("/")

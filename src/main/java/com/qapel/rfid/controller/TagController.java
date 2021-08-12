@@ -1,4 +1,4 @@
-package com.qapel.rfid;
+package com.qapel.rfid.controller;
 
 import com.qapel.rfid.entities.QueuedTag;
 import com.qapel.rfid.entities.StationId;
@@ -16,11 +16,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -30,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequestMapping("/tag")
 abstract class BaseTagController {
     protected static final Map<String,Integer> stationIdMapper = new ConcurrentHashMap<>();
+    protected static final Map<Integer, Queue<QueuedTag>> tagQueue = new ConcurrentHashMap<>();
     static final String insertTag = "INSERT INTO tags (Reader_Name, EPC, Antenna, First_Read, Last_Read, Num_Reads) " +
             "VALUES (?,?,?,?,?,?)";
     //static final String view = "SELECT * FROM reader.tags";
@@ -52,6 +51,17 @@ abstract class BaseTagController {
             return stationIdMapper;
         });
     }
+    public static void enqueue(int id, QueuedTag t) {
+        // lookup the id in the list
+        Queue<QueuedTag> tag = tagQueue.get(id);
+        // if not found create a new queue and add it to the list
+        if (tag == null) {
+            tag = new LinkedBlockingQueue<>();
+            tagQueue.put(id,tag);
+        }
+        tag.add(t);
+    }
+
 }
 
 /**
@@ -59,6 +69,46 @@ abstract class BaseTagController {
  */
 @RestController
 class TagRestController extends BaseTagController {
+
+    /**
+     * This method continually calls the update method utill the
+     * for loop completes
+     */
+    @GetMapping("/poll")
+    public String poll(@RequestParam String station_id) {
+        if (tagQueue.isEmpty()) return null;
+        try {
+            int id = Integer.parseInt(station_id);
+            return update(id);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * This method updates ReversePage.jsp <div id="read_tags"></div>"
+     * using dwr reverse ajax
+     */
+    public String update(int id) {
+        String result = "";
+        Queue<QueuedTag> tag = tagQueue.get(id);
+        while (tag != null && !tag.isEmpty()) {
+            try {
+                QueuedTag t = tag.poll();
+                if (t != null) {
+                    result = String.format("{\"epc\":\"%s\", \"status\":\"%s\"}", t.getEpc(), t.getStatus());
+                    /*
+                        Util.setClassName("read_tags", "h1 p-4 m-4 border border-success rounded bg-success");
+                        result = "/sound/pass.mp3";
+                    */
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+
     /**
      * For testing purposes during development
      * @param id Station id
@@ -70,7 +120,7 @@ class TagRestController extends BaseTagController {
                 new Timestamp(System.currentTimeMillis()), 4);
         jdbcTemplate.update(insertTag, tag.getReaderName(), tag.getEpc(), tag.getAntenna(),
                 tag.getFirstRead(),tag.getLastRead(),tag.getNumReads());
-        ReverseClass.enqueue(id, QueuedTag.builder().stationId(id).epc(tag.getEpc()).status(status).build());
+        enqueue(id, QueuedTag.builder().stationId(id).epc(tag.getEpc()).status(status).build());
         return tag;
     }
 
@@ -123,7 +173,7 @@ class TagRestController extends BaseTagController {
                 Integer station_id = stationIdMapper.get(StationId.indexFromReader(readerName, antenna));
                 if (station_id != null) {
                     tag = new Tag(readerName, epc, antenna, firstRead, lastRead, readNum);
-                    ReverseClass.enqueue(station_id, QueuedTag.builder().stationId(station_id).epc(epc).status(getStatus(station_id, readerName, antenna)).build());
+                    enqueue(station_id, QueuedTag.builder().stationId(station_id).epc(epc).status(getStatus(station_id, readerName, antenna)).build());
                 } else {
                     System.out.println("No station ID registered to show tag: "
                             + StationId.indexFromReader(readerName, antenna));

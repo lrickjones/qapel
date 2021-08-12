@@ -72,3 +72,26 @@
             });
         });
     }
+
+    function poll() {
+        let stationId = getCookie("station_id");
+        $.getJSON("/tag/poll?station_id="+stationId, function(data) {
+            if (data) {
+                let classStr = "h1 p-4 m-4 border border-success rounded "
+                if (data.status.localeCompare("pass", undefined, { sensitivity: 'accent' }) === 0){
+                    classStr += "bg-success";
+                    play("/sound/pass.mp3");
+                } else {
+                    classStr += "bg-danger";
+                    play("/sound/fail.mp3");
+                }
+                let div = "<div class='" + classStr + "'>" + data.epc + " -> " + data.status + "</div>";
+                document.getElementById("read_tags").innerHTML = div;
+            }
+        });
+        startPolling();
+    }
+
+    function startPolling() {
+        setTimeout(poll, 1000);
+    }

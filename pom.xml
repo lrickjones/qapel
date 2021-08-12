@@ -76,11 +76,11 @@
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.directwebremoting/dwr -->
-		<dependency>
+		<!--dependency>
 			<groupId>org.directwebremoting</groupId>
 			<artifactId>dwr</artifactId>
 			<version>3.0.2-RELEASE</version>
-		</dependency>
+		</dependency-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

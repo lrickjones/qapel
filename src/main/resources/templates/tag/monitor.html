@@ -20,13 +20,10 @@
             document.getElementById("controlBtn").innerHTML = "<i class='fas fa-solid fa-pulse'></i><span class='ms-2'>Waiting...</span>";
             startPolling();
         }
-
-        function startPolling() {
-            setTimeout(poll, 1000);
-        }
-
+/*
         function poll() {
             let stationId = getCookie("station_id");
+
             ReverseClass.callReverseDWR(stationId, {
                 callback:function(result) {
                     if (result.length > 0) {
@@ -38,6 +35,7 @@
                 errorHandler:function(message) { alert(message + ": try reloading page"); }
             });
         }
+*/
     </script>
 </head>
 

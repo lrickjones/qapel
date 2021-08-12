@@ -1,4 +1,4 @@
-package com.qapel.rfid;
+package com.qapel.rfid.controller;
 
 import com.qapel.rfid.entities.Station;
 import com.qapel.rfid.repository.StationRepository;
