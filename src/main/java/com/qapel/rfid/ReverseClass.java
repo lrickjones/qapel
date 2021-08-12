@@ -1,7 +1,6 @@
 package com.qapel.rfid;
 
 import com.qapel.rfid.entities.QueuedTag;
-import com.qapel.rfid.entities.Tag;
 import org.directwebremoting.annotations.RemoteMethod;
 import org.directwebremoting.annotations.RemoteProxy;
 import org.directwebremoting.ui.dwr.Util;

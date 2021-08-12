@@ -29,10 +29,10 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @RequestMapping("/tag")
 abstract class BaseTagController {
-    protected final Map<String,Integer> stationIdMapper = new ConcurrentHashMap<>();
+    protected static final Map<String,Integer> stationIdMapper = new ConcurrentHashMap<>();
     static final String insertTag = "INSERT INTO tags (Reader_Name, EPC, Antenna, First_Read, Last_Read, Num_Reads) " +
             "VALUES (?,?,?,?,?,?)";
-    static final String view = "SELECT * FROM reader.tags";
+    //static final String view = "SELECT * FROM reader.tags";
     static final String readerName2StationId = "SELECT DISTINCT reader_name, station_id, antenna from reader.stations";
     static final String getStations = "SELECT DISTINCT reader_name, antenna, status from reader.stations WHERE station_id = ?";
     static final String lookup_status = "SELECT DISTINCT status from reader.stations WHERE station_id=? AND reader_name=? AND antenna=?";
@@ -62,7 +62,7 @@ class TagRestController extends BaseTagController {
     /**
      * For testing purposes during development
      * @param id Station id
-     * @return
+     * @return Tag generated in test request
      */
     @PostMapping("/test")
     public Tag test(@RequestParam int id, @RequestParam String status) {
@@ -145,8 +145,8 @@ class TagHTMLController extends BaseTagController {
      * @return Reference to /tag/monitor.html template
      */
     @GetMapping("/monitor")
-    public String allTags(@RequestParam(required = false) String id,
-                          @CookieValue("station_id") String idCookie,
+    public String monitor(@RequestParam(required = false) String id,
+                          @CookieValue(value = "station_id", required = false) String idCookie,
                           HttpServletResponse response,
                           Model model) {
         //TODO: This maps on startup only, need to add refresh when station updates
@@ -155,26 +155,25 @@ class TagHTMLController extends BaseTagController {
         }
         // If there is no station id as parameter or web page, force id selection
         if (id == null && idCookie == null) {
-            return "/station/select";
+            return "redirect:/station/select";
         } else if (id != null) {
             // if id != null set the cookie and use it as the id
             response.addCookie(new Cookie("station_id", id));
         }
         // id has precedence over idCookie
-        String useId = id == null?idCookie:id;
-        // If we ended up with a usable id, populate the station table
-        if (useId != null) {
-            List<StationId> stationList = new ArrayList<>();
-            jdbcTemplate.query(getStations, (ResultSetExtractor<Object>) rs -> {
-                while (rs.next()) {
-                    StationId stationId = StationId.builder().readerName(rs.getString("reader_name"))
-                            .antenna(rs.getInt("antenna")).status(rs.getString("status")).build();
-                    stationList.add(stationId);
-                }
-                return stationList;
-            }, useId);
-            model.addAttribute("stationList", stationList);
-        }
+        String useId = (id == null?idCookie:id);
+
+        List<StationId> stationList = new ArrayList<>();
+        jdbcTemplate.query(getStations, (ResultSetExtractor<Object>) rs -> {
+            while (rs.next()) {
+                StationId stationId = StationId.builder().readerName(rs.getString("reader_name"))
+                        .antenna(rs.getInt("antenna")).status(rs.getString("status")).build();
+                stationList.add(stationId);
+            }
+            return stationList;
+        }, useId);
+        model.addAttribute("stationList", stationList);
+
         return "/tag/monitor";
     }
 

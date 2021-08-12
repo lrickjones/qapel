@@ -26,10 +26,10 @@ abstract class BaseStationController {
 
 
 @Controller
-public class StationController extends BaseStationController {
+public class StationHTMLController extends BaseStationController {
 
 
-    public StationController(StationRepository stationRepository) {
+    public StationHTMLController(StationRepository stationRepository) {
         super(stationRepository);
     }
 
@@ -93,9 +93,9 @@ public class StationController extends BaseStationController {
 }
 
 @RestController
-class RestStationController extends BaseStationController {
+class StationRestController extends BaseStationController {
 
-    public RestStationController(StationRepository stationRepository) {
+    public StationRestController(StationRepository stationRepository) {
         super(stationRepository);
     }
 
