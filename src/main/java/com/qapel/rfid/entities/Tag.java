@@ -10,15 +10,13 @@ import java.sql.Timestamp;
 @Setter
 @Builder
 public class Tag {
+    int id;
     String readerName;
     String epc;
+    int stationId;
     int antenna;
+    String status;
     Timestamp firstRead;
     Timestamp lastRead;
     int numReads;
-
-    public Tag(String epc) {
-        this.epc = epc;
-        System.out.println(epc + " read");
-    }
 }

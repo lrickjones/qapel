@@ -1,9 +1,11 @@
 package com.qapel.rfid.controller;
 
 import com.qapel.rfid.entities.QueuedTag;
+import com.qapel.rfid.entities.StationCache;
 import com.qapel.rfid.entities.StationId;
 import com.qapel.rfid.entities.Tag;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,10 +29,11 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @RequestMapping("/tag")
 abstract class BaseTagController {
-    protected static final Map<String,Integer> stationIdMapper = new ConcurrentHashMap<>();
+    protected static final Map<String, StationCache> stationIdMapper = new ConcurrentHashMap<>();
     protected static final Map<Integer, Queue<QueuedTag>> tagQueue = new ConcurrentHashMap<>();
-    static final String insertTag = "INSERT INTO tags (Reader_Name, EPC, Antenna, First_Read, Last_Read, Num_Reads) " +
-            "VALUES (?,?,?,?,?,?)";
+    static final String insertTag = "INSERT INTO tags " +
+            "(Reader_Name, EPC, Antenna, Status, Station_Id, First_Read, Last_Read, Num_Reads) " +
+            "VALUES (?,?,?,?,?,?,?,?)";
     //static final String view = "SELECT * FROM reader.tags";
     static final String readerName2StationId = "SELECT DISTINCT reader_name, station_id, antenna from reader.stations";
     static final String getStations = "SELECT DISTINCT reader_name, antenna, status from reader.stations WHERE station_id = ?";
@@ -42,11 +45,15 @@ abstract class BaseTagController {
         stationIdMapper.clear();
         jdbcTemplate.query(readerName2StationId, (ResultSetExtractor<Object>) rs -> {
             while (rs.next()) {
+                String readerName = rs.getString("reader_name");
+                int antenna = rs.getInt("antenna");
                 int station_id = rs.getInt("station_id");
+                //TODO: May want to optimize this as part of a join query with reader configuration table
+                String status = getStatus(station_id, readerName, antenna);
                 // store combination of reader name and antenna to map to station so a reader can
                 // support more than one station using different antenna assignments
-                String reader_name = StationId.indexFromReader(rs.getString("reader_name"), rs.getInt("antenna"));
-                stationIdMapper.put(reader_name, station_id);
+                String readerIdx = StationId.indexFromReader(readerName, antenna);
+                stationIdMapper.put(readerIdx, new StationCache(station_id, status));
             }
             return stationIdMapper;
         });
@@ -62,6 +69,16 @@ abstract class BaseTagController {
         tag.add(t);
     }
 
+    public String getStatus(int stationId, String readerName, int antenna) {
+        AtomicReference<String> passed = new AtomicReference<>();
+        jdbcTemplate.query(lookup_status,(ResultSetExtractor<Object>) rs -> {
+            while (rs.next()) {
+                passed.set(rs.getString("status"));
+            }
+            return passed;
+        },stationId, readerName, antenna);
+        return passed.get();
+    }
 }
 
 /**
@@ -97,10 +114,6 @@ class TagRestController extends BaseTagController {
                 QueuedTag t = tag.poll();
                 if (t != null) {
                     result = String.format("{\"epc\":\"%s\", \"status\":\"%s\"}", t.getEpc(), t.getStatus());
-                    /*
-                        Util.setClassName("read_tags", "h1 p-4 m-4 border border-success rounded bg-success");
-                        result = "/sound/pass.mp3";
-                    */
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -116,71 +129,113 @@ class TagRestController extends BaseTagController {
      */
     @PostMapping("/test")
     public Tag test(@RequestParam int id, @RequestParam String status) {
-        Tag tag =  new Tag("test1", "00002341234", 1, new Timestamp(System.currentTimeMillis()),
-                new Timestamp(System.currentTimeMillis()), 4);
-        jdbcTemplate.update(insertTag, tag.getReaderName(), tag.getEpc(), tag.getAntenna(),
-                tag.getFirstRead(),tag.getLastRead(),tag.getNumReads());
+        Tag tag =  Tag.builder().readerName("Test Reader")
+                .epc("00002341234")
+                .antenna(1)
+                .status(status)
+                .firstRead(new Timestamp(System.currentTimeMillis()))
+                .lastRead(new Timestamp(System.currentTimeMillis()))
+                .numReads(4).build();
+        jdbcTemplate.update(insertTag, tag.getReaderName(), tag.getEpc(), tag.getAntenna(), tag.getStatus(),
+                tag.getStationId(), tag.getFirstRead(),tag.getLastRead(),tag.getNumReads());
         enqueue(id, QueuedTag.builder().stationId(id).epc(tag.getEpc()).status(status).build());
         return tag;
     }
 
+    /**
+     * Update the station lookup cache, this should be called any time the station or stations table are updated
+     */
     @GetMapping("/update_stations")
     public void updateStations() {
         this.updateStationIdMapper();
     }
 
-    public String getStatus(int stationId, String readerName, int antenna) {
-        AtomicReference<String> passed = new AtomicReference<>();
-        jdbcTemplate.query(lookup_status,(ResultSetExtractor<Object>) rs -> {
-            while (rs.next()) {
-                passed.set(rs.getString("status"));
-            }
-            return passed;
-        },stationId, readerName, antenna);
-        return passed.get();
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'");
+
+    /**
+     * Parse iso8601 formatted date into timestamp
+     * @param date ISO8601 formatted date
+     * @return Timestamp or now() if there is an error parsing the date
+     */
+    private Timestamp parseIsoDate(String date) {
+        long elapsed;
+        try {
+            Date parsedDate = dateFormat.parse(date);
+            elapsed = parsedDate.getTime();
+        } catch (Exception e) {
+            elapsed = System.currentTimeMillis();
+        }
+        return new Timestamp(elapsed);
     }
 
     /**
-     * Add tag from JSON sent by impinj reader connect
+     * Add tag from JSON sent by impinj reader connect to database and queue up for feedback to client
      * @param request JSON with tag information from impinj reader
-     * @return tag added
      */
     @PostMapping("/impinj/add_tag")
-    public Tag addTag(@RequestBody String request) {
+    public void addTag(@RequestBody String request) {
 
+        // Get meta information from tag read
         JSONObject jsonHeader = new JSONObject(request);
-        JSONArray jsonArray = jsonHeader.getJSONArray("tag_reads");
-        String readerName = jsonHeader.getString("reader_name");
-        Tag tag = null;
+        String readerName = jsonHeader.getString("reader_name");        // reader is in meta
+        JSONArray jsonArray = jsonHeader.getJSONArray("tag_reads");     // list of tags from reader
 
+        Map<String, Tag> tagMap = new HashMap<>();
         for (int j = 0; j < jsonArray.length(); j++) {
+            // read tag j from json Array
             JSONObject json = jsonArray.getJSONObject(j);
+            // Ignore heartbeat tags TODO: make use of heartbeat to test connection
             if (!json.getBoolean("isHeartBeat")) {
+                // read tag fields
                 String epc = json.getString("epc");
                 int antenna = json.getInt("antennaPort");
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'");
-                long elapsed;
+
+                // should set Speedway Connect Output:Timestamp Format to ISO8601, if not try Unix Time as a fail-safe
+                Timestamp timestamp;
                 try {
-                    Date parsedDate = dateFormat.parse(json.getString("firstSeenTimestamp"));
-                    elapsed = parsedDate.getTime();
-                } catch (Exception e) {
-                    elapsed = System.currentTimeMillis();
+                    timestamp = parseIsoDate(json.getString("firstSeenTimestamp"));
+                } catch(JSONException e) {
+                    timestamp = new Timestamp(json.getLong("firstSeenTimeStamp") * 1000L);
                 }
-                Timestamp firstRead = new Timestamp(elapsed);
-                Timestamp lastRead = new Timestamp(elapsed);
-                int readNum = 0;
-                jdbcTemplate.update(insertTag, readerName, epc, antenna, firstRead, lastRead, readNum);
-                Integer station_id = stationIdMapper.get(StationId.indexFromReader(readerName, antenna));
-                if (station_id != null) {
-                    tag = new Tag(readerName, epc, antenna, firstRead, lastRead, readNum);
-                    enqueue(station_id, QueuedTag.builder().stationId(station_id).epc(epc).status(getStatus(station_id, readerName, antenna)).build());
+
+                // look for tag in map to see if it is duplicated
+                Tag tag = tagMap.get(epc + ":" + antenna);
+                if (tag == null) {
+                    // if tag is new, add it to the collection
+                    tag = Tag.builder().readerName(readerName).epc(epc).antenna(antenna)
+                            .firstRead(timestamp).lastRead(timestamp).numReads(1).build();
+                    tagMap.put(epc + ":" + antenna, tag);
                 } else {
-                    System.out.println("No station ID registered to show tag: "
-                            + StationId.indexFromReader(readerName, antenna));
+                    // if the tag exists, update the tag
+                    if (timestamp.before(tag.getFirstRead())) {
+                        tag.setFirstRead(timestamp);
+                    }
+                    if (timestamp.after(tag.getLastRead())) {
+                        tag.setLastRead(timestamp);
+                    }
+                    tag.setNumReads(tag.getNumReads() + 1);
                 }
             }
         }
-        return tag;
+        // for each unique tag found
+        for (Tag tag: tagMap.values()) {
+            StationCache stationInfo = stationIdMapper.get(StationId.indexFromReader(readerName, tag.getAntenna()));
+            // add tag to database
+            String status = stationInfo == null?null:stationInfo.getStatus();
+            jdbcTemplate.update(insertTag, tag.getReaderName(), tag.getEpc(), tag.getAntenna(), status,
+                    stationInfo.getStationId(), tag.getFirstRead(), tag.getLastRead(), tag.getNumReads());
+            // queue up tag for processing on page
+            if (stationInfo != null) {
+                enqueue(stationInfo.getStationId(),
+                        QueuedTag.builder()
+                                .stationId(stationInfo.getStationId())
+                                .epc(tag.getEpc())
+                                .status(stationInfo.getStatus()).build());
+            } else {
+                System.out.println("No station ID registered to show tag: "
+                        + StationId.indexFromReader(readerName, tag.getAntenna()));
+            }
+        }
     }
 }
 /**
