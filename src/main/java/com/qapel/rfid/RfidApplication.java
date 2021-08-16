@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.qapel.rfid.controller","com.qapel.rfid"})
+@ComponentScan(basePackages = {"com.qapel.rfid.controller","com.qapel.rfid","com.qapel.rfid.event"})
 public class RfidApplication {
 
 	public static void main(String[] args) {

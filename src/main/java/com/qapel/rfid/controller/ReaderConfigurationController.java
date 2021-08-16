@@ -2,9 +2,11 @@ package com.qapel.rfid.controller;
 
 import com.qapel.rfid.entities.ReaderConfiguration;
 import com.qapel.rfid.entities.Station;
+import com.qapel.rfid.event.StationChangeEvent;
 import com.qapel.rfid.repository.ReaderConfigurationRepository;
 import com.qapel.rfid.repository.StationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,6 +22,9 @@ import java.util.Optional;
 @Controller
 @RequestMapping("/readerConfiguration/")
 public class ReaderConfigurationController {
+    @Autowired
+    private ApplicationEventPublisher stationChange;
+
     protected final ReaderConfigurationRepository readerConfigurationRepository;
     protected final StationRepository stationRepository;
 
@@ -49,6 +54,9 @@ public class ReaderConfigurationController {
             return "/readerConfiguration/add-readerConfiguration";
         }
         readerConfigurationRepository.save(readerConfiguration);
+
+        // send station change notice to update cached station inf
+        stationChange.publishEvent(new StationChangeEvent(this));
         return "redirect:list";
     }
 
@@ -72,6 +80,8 @@ public class ReaderConfigurationController {
         if (station.isPresent()) {
             readerConfiguration.setStation(station.get());
             readerConfigurationRepository.save(readerConfiguration);
+            // send station change notice to update cached station inf
+            stationChange.publishEvent(new StationChangeEvent(this));
         }
         model.addAttribute("readerConfigurations", readerConfigurationRepository.findAll());
         return "/readerConfiguration/index";
@@ -81,6 +91,9 @@ public class ReaderConfigurationController {
     public String deleteReaderConfiguration(@PathVariable("id") int id, Model model) {
         Optional<ReaderConfiguration> readerConfiguration = readerConfigurationRepository.findById(id);
         readerConfiguration.ifPresent(readerConfigurationRepository::delete);
+
+        // send station change notice to update cached station inf
+        stationChange.publishEvent(new StationChangeEvent(this));
         model.addAttribute("readerConfigurations", readerConfigurationRepository.findAll());
         return "/readerConfiguration/index";
     }

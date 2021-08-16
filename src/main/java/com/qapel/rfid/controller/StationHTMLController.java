@@ -1,8 +1,10 @@
 package com.qapel.rfid.controller;
 
 import com.qapel.rfid.entities.Station;
+import com.qapel.rfid.event.StationChangeEvent;
 import com.qapel.rfid.repository.StationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,12 +24,14 @@ abstract class BaseStationController {
     public BaseStationController(StationRepository stationRepository) {
         this.stationRepository = stationRepository;
     }
+
+    @Autowired
+    protected ApplicationEventPublisher stationChange;
 }
 
 
 @Controller
 public class StationHTMLController extends BaseStationController {
-
 
     public StationHTMLController(StationRepository stationRepository) {
         super(stationRepository);
@@ -54,6 +58,9 @@ public class StationHTMLController extends BaseStationController {
         }
 
         stationRepository.save(station);
+
+        // send station change notice to update cached station inf
+        stationChange.publishEvent(new StationChangeEvent(this));
         return "redirect:list";
     }
 
@@ -72,6 +79,10 @@ public class StationHTMLController extends BaseStationController {
             return "/station/update-station";
         }
         stationRepository.save(station);
+
+        // send station change notice to update cached station inf
+        stationChange.publishEvent(new StationChangeEvent(this));
+
         model.addAttribute("stations", stationRepository.findAll());
         return "/station/index";
     }
@@ -80,6 +91,10 @@ public class StationHTMLController extends BaseStationController {
     public String deleteStation(@PathVariable("id") int id, Model model) {
         Optional<Station> station = stationRepository.findById(id);
         station.ifPresent(stationRepository::delete);
+
+        // send station change notice to update cached station inf
+        stationChange.publishEvent(new StationChangeEvent(this));
+
         model.addAttribute("stations", stationRepository.findAll());
         return "/station/index";
     }

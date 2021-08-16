@@ -1,7 +1,9 @@
 package com.qapel.rfid.controller;
 
 import com.qapel.rfid.entities.Tag;
+import com.qapel.rfid.event.RefreshRepositoryEvent;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -15,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/repository")
-public class TagRepositoryController {
+public class TagRepositoryController implements ApplicationListener<RefreshRepositoryEvent> {
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
@@ -28,6 +30,9 @@ public class TagRepositoryController {
     static final String updateTag="UPDATE reader.repository SET station_id=?, final_status=?," +
             "first_read=?, last_read=?, num_reads=? WHERE epc=? AND station_id=?";
 
+    /**
+     * Rest API to refresh repository from external processes
+     */
     @GetMapping("/refresh")
     public void refresh() {
         boolean stuffToDo = true;
@@ -63,6 +68,11 @@ public class TagRepositoryController {
         }
     }
 
+    /**
+     * Move a tag from tag table to repository
+     * @param tag tag to be moved
+     * @return true if tag is successfully moved, otherwise false
+     */
     private boolean moveTagToRepository(Tag tag) {
         Tag qTag = jdbcTemplate.query(getFromRepository, rs-> {
             if (rs.next()) {
@@ -96,5 +106,14 @@ public class TagRepositoryController {
             }
         }
         return true; // don't update
+    }
+
+    /**
+     * Listen for repository refresh events from controllers inside this sprint boot envionment
+     * @param repositoryEvent RefreshRepositoryEvent
+     */
+    @Override
+    public void onApplicationEvent(RefreshRepositoryEvent repositoryEvent) {
+        this.refresh();
     }
 }

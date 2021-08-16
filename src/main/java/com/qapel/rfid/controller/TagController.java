@@ -4,10 +4,15 @@ import com.qapel.rfid.entities.QueuedTag;
 import com.qapel.rfid.entities.StationCache;
 import com.qapel.rfid.entities.StationId;
 import com.qapel.rfid.entities.Tag;
+import com.qapel.rfid.event.RefreshRepositoryEvent;
+import com.qapel.rfid.event.StationChangeEvent;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationListener;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Controller;
@@ -20,6 +25,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,9 +34,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * Base controller allows sharing between the two different controllers, REST and Thymeleaf
  */
 @RequestMapping("/tag")
-abstract class BaseTagController {
-    protected static final Map<String, StationCache> stationIdMapper = new ConcurrentHashMap<>();
-    protected static final Map<Integer, Queue<QueuedTag>> tagQueue = new ConcurrentHashMap<>();
+abstract class BaseTagController implements ApplicationListener<StationChangeEvent> {
+    protected static ConcurrentMap<String, StationCache> stationIdMapper = new ConcurrentHashMap<>();
+    protected static final ConcurrentMap<Integer, Queue<QueuedTag>> tagQueue = new ConcurrentHashMap<>();
     static final String insertTag = "INSERT INTO tags " +
             "(Reader_Name, EPC, Antenna, Status, Station_Id, First_Read, Last_Read, Num_Reads) " +
             "VALUES (?,?,?,?,?,?,?,?)";
@@ -42,7 +48,7 @@ abstract class BaseTagController {
     protected JdbcTemplate jdbcTemplate;
 
     protected void updateStationIdMapper() {
-        stationIdMapper.clear();
+        ConcurrentMap<String, StationCache> newIdMapper = new ConcurrentHashMap<>();
         jdbcTemplate.query(readerName2StationId, (ResultSetExtractor<Object>) rs -> {
             while (rs.next()) {
                 String readerName = rs.getString("reader_name");
@@ -53,11 +59,22 @@ abstract class BaseTagController {
                 // store combination of reader name and antenna to map to station so a reader can
                 // support more than one station using different antenna assignments
                 String readerIdx = StationId.indexFromReader(readerName, antenna);
-                stationIdMapper.put(readerIdx, new StationCache(station_id, status));
+                newIdMapper.put(readerIdx, new StationCache(station_id, status));
             }
-            return stationIdMapper;
+            return newIdMapper;
         });
+        stationIdMapper = newIdMapper;
     }
+
+    /**
+     * Event hook to allow controllers in same environment to update the stationId mapper
+     * External controllers and processes need to use the REST API in the TagRestController
+      */
+    @Override
+    public void onApplicationEvent(StationChangeEvent event) {
+        this.updateStationIdMapper();
+    }
+
     public static void enqueue(int id, QueuedTag t) {
         // lookup the id in the list
         Queue<QueuedTag> tag = tagQueue.get(id);
@@ -86,27 +103,28 @@ abstract class BaseTagController {
  */
 @RestController
 class TagRestController extends BaseTagController {
+     @Autowired
+     private ApplicationEventPublisher repositoryRefresh;
 
     /**
-     * This method continually calls the update method utill the
-     * for loop completes
+     * If there are any events in the queue call check queue to find a matching event,
+     * return empty string if queue is empty
      */
     @GetMapping("/poll")
     public String poll(@RequestParam String station_id) {
         if (tagQueue.isEmpty()) return null;
         try {
             int id = Integer.parseInt(station_id);
-            return update(id);
+            return checkQueue(id);
         } catch (NumberFormatException e) {
-            return null;
+            return "";
         }
     }
 
     /**
-     * This method updates ReversePage.jsp <div id="read_tags"></div>"
-     * using dwr reverse ajax
+     * Check queue for incoming event, return json string with event info if found, otherwise return empty string
      */
-    public String update(int id) {
+    public String checkQueue(int id) {
         String result = "";
         Queue<QueuedTag> tag = tagQueue.get(id);
         while (tag != null && !tag.isEmpty()) {
@@ -221,9 +239,17 @@ class TagRestController extends BaseTagController {
         for (Tag tag: tagMap.values()) {
             StationCache stationInfo = stationIdMapper.get(StationId.indexFromReader(readerName, tag.getAntenna()));
             // add tag to database
-            String status = stationInfo == null?null:stationInfo.getStatus();
-            jdbcTemplate.update(insertTag, tag.getReaderName(), tag.getEpc(), tag.getAntenna(), status,
-                    stationInfo.getStationId(), tag.getFirstRead(), tag.getLastRead(), tag.getNumReads());
+            try {
+                // Get default info for stationId and status so read can be recorded
+                // TODO: Alert user to this situation where there is not identifiable station info
+                String status = stationInfo == null?null:stationInfo.getStatus();
+                int stationId = stationInfo == null?0:stationInfo.getStationId();
+                jdbcTemplate.update(insertTag, tag.getReaderName(), tag.getEpc(), tag.getAntenna(), status,
+                        stationId, tag.getFirstRead(), tag.getLastRead(), tag.getNumReads());
+                repositoryRefresh.publishEvent(new RefreshRepositoryEvent(this));
+            } catch (DataAccessException e) {
+                e.printStackTrace();
+            }
             // queue up tag for processing on page
             if (stationInfo != null) {
                 enqueue(stationInfo.getStationId(),
