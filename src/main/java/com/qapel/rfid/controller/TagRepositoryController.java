@@ -1,5 +1,7 @@
 package com.qapel.rfid.controller;
 
+import com.qapel.rfid.entities.StationId;
+import com.qapel.rfid.entities.StationReport;
 import com.qapel.rfid.entities.Tag;
 import com.qapel.rfid.event.RefreshRepositoryEvent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,33 +9,32 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-@RestController
 @RequestMapping("/repository")
-public class TagRepositoryController implements ApplicationListener<RefreshRepositoryEvent> {
+abstract class TagRepositoryBaseController implements ApplicationListener<RefreshRepositoryEvent> {
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
     private static final String getAll = "SELECT * FROM reader.tags LIMIT 20;";
     private static final String deleteId = "DELETE FROM reader.tags WHERE (id = ?)";
     private static final String getFromRepository = "SElECT * FROM reader.repository WHERE epc=? AND station_id=?";
-    static final String insertTag = "INSERT INTO reader.repository " +
+    private static final String insertTag = "INSERT INTO reader.repository " +
             "(epc, station_id, final_status, first_read, last_read, num_reads) " +
             "VALUES (?,?,?,?,?,?)";
-    static final String updateTag="UPDATE reader.repository SET station_id=?, final_status=?," +
+    private static final String updateTag = "UPDATE reader.repository SET station_id=?, final_status=?," +
             "first_read=?, last_read=?, num_reads=? WHERE epc=? AND station_id=?";
+    protected static final String stationReport = "SELECT station.name, repository.epc, repository.final_status FROM " +
+            "reader.repository INNER JOIN station ON repository.station_id=station.id";
 
-    /**
-     * Rest API to refresh repository from external processes
-     */
-    @GetMapping("/refresh")
     public void refresh() {
         boolean stuffToDo = true;
         while (stuffToDo) {
@@ -117,4 +118,37 @@ public class TagRepositoryController implements ApplicationListener<RefreshRepos
     public void onApplicationEvent(RefreshRepositoryEvent repositoryEvent) {
         this.refresh();
     }
+
+}
+
+@Controller
+class TagRepositoryHTMLController extends TagRepositoryBaseController {
+    @GetMapping("/station_report")
+    public String stationReport(HttpServletResponse response,
+                          Model model) {
+        List<StationReport> stationReportList = new ArrayList<>();
+        jdbcTemplate.query(stationReport, (ResultSetExtractor<Object>) rs -> {
+            while (rs.next()) {
+                StationReport stationReport = StationReport.builder().stationName(rs.getString("station.name"))
+                        .epc(rs.getString("repository.epc")).status(rs.getString("repository.final_status")).build();
+                stationReportList.add(stationReport);
+            }
+            return stationReportList;
+        });
+        model.addAttribute("stationReportList", stationReportList);
+
+        return "/repository/station_report";
+    }
+}
+
+@RestController
+class TagRepositoryRestController extends TagRepositoryBaseController {
+    /**
+     * Rest API to refresh repository from external processes
+     */
+    @GetMapping("/refresh")
+    public void doRefresh() {
+        this.refresh();
+    }
+
 }

@@ -288,7 +288,6 @@ class TagHTMLController extends BaseTagController {
                           @CookieValue(value = "station_id", required = false) String idCookie,
                           HttpServletResponse response,
                           Model model) {
-        //TODO: This maps on startup only, need to add refresh when station updates
         if (stationIdMapper.isEmpty()) {
             this.updateStationIdMapper();
         }
