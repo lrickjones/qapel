@@ -96,7 +96,8 @@ public class TagRepositoryController implements ApplicationListener<RefreshRepos
             Timestamp firstRead = tag.getFirstRead().before(qTag.getFirstRead())?tag.getFirstRead():qTag.getFirstRead();
             Timestamp lastRead = tag.getLastRead().after(qTag.getLastRead())?tag.getLastRead():qTag.getLastRead();
             int numReads = tag.getNumReads() + qTag.getNumReads();
-            String status = (tag.getStatus().equalsIgnoreCase("fail"))?tag.getStatus():qTag.getStatus();
+            // get status shouldn't be null, but if so we will process it without changing the status
+            String status = (tag.getStatus() != null && tag.getStatus().equalsIgnoreCase("fail"))?tag.getStatus():qTag.getStatus();
             try {
                 jdbcTemplate.update(updateTag, qTag.getStationId(), status, firstRead, lastRead,
                         numReads, qTag.getEpc(), qTag.getStationId());

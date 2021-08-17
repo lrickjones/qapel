@@ -6,6 +6,9 @@ import com.qapel.rfid.entities.StationId;
 import com.qapel.rfid.entities.Tag;
 import com.qapel.rfid.event.RefreshRepositoryEvent;
 import com.qapel.rfid.event.StationChangeEvent;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -168,7 +170,7 @@ class TagRestController extends BaseTagController {
         this.updateStationIdMapper();
     }
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'");
+    private static final DateTimeFormatter dateFormatter = ISODateTimeFormat.dateTime();
 
     /**
      * Parse iso8601 formatted date into timestamp
@@ -178,8 +180,8 @@ class TagRestController extends BaseTagController {
     private Timestamp parseIsoDate(String date) {
         long elapsed;
         try {
-            Date parsedDate = dateFormat.parse(date);
-            elapsed = parsedDate.getTime();
+            DateTime parsedDate = dateFormatter.parseDateTime(date);
+            elapsed = parsedDate.getMillis();
         } catch (Exception e) {
             elapsed = System.currentTimeMillis();
         }
@@ -238,10 +240,16 @@ class TagRestController extends BaseTagController {
         // for each unique tag found
         for (Tag tag: tagMap.values()) {
             StationCache stationInfo = stationIdMapper.get(StationId.indexFromReader(readerName, tag.getAntenna()));
+            if (stationInfo == null) {
+                // if station info not found, make sure cache is up to date
+                updateStationIdMapper();
+                stationInfo = stationIdMapper.get(StationId.indexFromReader(readerName, tag.getAntenna()));
+                // TODO, if still not found, log error
+                System.out.println("Station not found in station id cache: " + readerName + ": " + tag.getAntenna());
+            }
             // add tag to database
             try {
                 // Get default info for stationId and status so read can be recorded
-                // TODO: Alert user to this situation where there is not identifiable station info
                 String status = stationInfo == null?null:stationInfo.getStatus();
                 int stationId = stationInfo == null?0:stationInfo.getStationId();
                 jdbcTemplate.update(insertTag, tag.getReaderName(), tag.getEpc(), tag.getAntenna(), status,
