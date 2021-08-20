@@ -1,6 +1,5 @@
 package com.qapel.rfid.controller;
 
-import com.qapel.rfid.entities.StationId;
 import com.qapel.rfid.entities.StationReport;
 import com.qapel.rfid.entities.Tag;
 import com.qapel.rfid.event.RefreshRepositoryEvent;
@@ -11,9 +10,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.sql.Timestamp;
 import java.util.ArrayList;

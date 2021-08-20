@@ -12,6 +12,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ErrorController {
     private static final Logger logger = LoggerFactory.getLogger(ErrorController.class);
 
+    /**
+     * Error page handler
+     * @param throwable exception causing error
+     * @param model template model for updating error page
+     * @return reference to error template
+     */
     @ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public String exception(final Throwable throwable, final Model model) {

@@ -20,8 +20,7 @@ target/
 *.ipr
 
 ### NetBeans ###
-/nbproject/private/
-/nbbuild/
+/nbproject/private//nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
@@ -31,3 +30,5 @@ build/
 
 ### VS Code ###
 .vscode/
+/src/main/python/html_report.html
+/src/main/python/chart.png
