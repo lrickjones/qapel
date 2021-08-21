@@ -17,11 +17,16 @@ public class HTMLController {
      */
     @GetMapping("/")
     String index(Principal principal) {
-        return "redirect:/tag/monitor";
-        /*
-        * Use this when security is enabled to direct to login if user not logged in
+        //return "redirect:/tag/monitor";
+        //Use this when security is enabled to direct to login if user not logged in
         return principal != null ? "redirect:/tag/monitor" : "login";
-         */
+    }
+
+    @GetMapping("/tag/test")
+    String test(Principal principal) {
+        //return "redirect:/tag/monitor";
+        //Use this when security is enabled to direct to login if user not logged in
+        return "redirect:/tag/test";
     }
 
     /**

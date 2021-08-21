@@ -17,7 +17,7 @@ public class MvcConfig implements WebMvcConfigurer {
                 .addResourceLocations("classpath:/image/", "classpath:/sound/", "classpath:/js/", "classpath:/css/")
                 .setCachePeriod(0);
     }
-
+/*
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/tag").setViewName("tag");
         registry.addViewController("/station").setViewName("station");
@@ -25,4 +25,6 @@ public class MvcConfig implements WebMvcConfigurer {
         registry.addViewController("/").setViewName("tag");
         registry.addViewController("/login").setViewName("login");
     }
+
+ */
 }
