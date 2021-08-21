@@ -68,8 +68,8 @@
                                     </div>
 
                                     <h5 class="fw-normal mb-3 pb-3" style="letter-spacing: 1px;">Sign in</h5>
-                                    <p th:if="${loginError}" class="error">Wrong user or password</p>
-
+                                    <p th:if="${param.error}" class="error text-danger">Wrong user or password</p>
+                                    <p th:if="${param.logout}" class="error text-warning ">User logged out</p>
                                     <div class="form-outline mb-4">
                                         <input type="text" id="username" name="username" class="form-control form-control-lg" autofocus="autofocus"/>
                                         <label class="form-label" for="username">User Name</label>
@@ -84,10 +84,10 @@
                                         <button class="btn btn-dark btn-lg btn-block" type="submit" value="Log in">Login</button>
                                     </div>
 
-                                    <a class="small text-muted" href="#!">Forgot password?</a>
+                                    <!--a class="small text-muted" href="#!">Forgot password?</a>
                                     <p class="mb-5 pb-lg-2" style="color: #393f81;">Don't have an account? <a href="#!" style="color: #393f81;">Register here</a></p>
                                     <a href="#!" class="small text-muted">Terms of use.</a>
-                                    <a href="#!" class="small text-muted">Privacy policy</a>
+                                    <a href="#!" class="small text-muted">Privacy policy</a-->
                                 </form>
 
                             </div>

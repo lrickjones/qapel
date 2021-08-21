@@ -12,6 +12,8 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationListener;
@@ -37,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @RequestMapping("/tag")
 abstract class BaseTagController implements ApplicationListener<StationChangeEvent> {
+    protected static final Logger logger = LoggerFactory.getLogger(ErrorController.class);
     protected static ConcurrentMap<String, StationCache> stationIdMapper = new ConcurrentHashMap<>();
     protected static final ConcurrentMap<Integer, Queue<QueuedTag>> tagQueue = new ConcurrentHashMap<>();
     static final String insertTag = "INSERT INTO tags " +
@@ -244,8 +247,7 @@ class TagRestController extends BaseTagController {
                 // if station info not found, make sure cache is up to date
                 updateStationIdMapper();
                 stationInfo = stationIdMapper.get(StationId.indexFromReader(readerName, tag.getAntenna()));
-                // TODO, if still not found, log error
-                System.out.println("Station not found in station id cache: " + readerName + ": " + tag.getAntenna());
+                logger.error("Station not found in station id cache: " + readerName + ": " + tag.getAntenna());
             }
             // add tag to database
             try {
@@ -266,7 +268,7 @@ class TagRestController extends BaseTagController {
                                 .epc(tag.getEpc())
                                 .status(stationInfo.getStatus()).build());
             } else {
-                System.out.println("No station ID registered to show tag: "
+                logger.error("No station ID registered to show tag: "
                         + StationId.indexFromReader(readerName, tag.getAntenna()));
             }
         }

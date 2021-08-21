@@ -15,7 +15,7 @@
 </head>
 
 <body th:with="httpStatus=${T(org.springframework.http.HttpStatus).valueOf(#response.status)}">
-<div>
+<div class="container my-5">
     <div th:replace="fragments/header :: header"></div>
     <div class="container border border-secondary rounded">
         <h1 th:text="|${httpStatus} - ${httpStatus.reasonPhrase}|">404</h1>
