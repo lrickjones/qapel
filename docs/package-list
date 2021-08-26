@@ -1,0 +1,5 @@
+com.qapel.rfid
+com.qapel.rfid.controller
+com.qapel.rfid.entities
+com.qapel.rfid.event
+com.qapel.rfid.repository
