@@ -36,12 +36,18 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Manage tag related api calls and thymeleaf templates
  * Base controller allows sharing between the two different controllers, REST and Thymeleaf
+ * This uses the JdbcTemplate model for accessing the database
  */
 @RequestMapping("/tag")
 abstract class BaseTagController implements ApplicationListener<StationChangeEvent> {
+    // error logger
     protected static final Logger logger = LoggerFactory.getLogger(ErrorController.class);
+
+    // Caches for in-memory data
     protected static ConcurrentMap<String, StationCache> stationIdMapper = new ConcurrentHashMap<>();
     protected static final ConcurrentMap<Integer, Queue<QueuedTag>> tagQueue = new ConcurrentHashMap<>();
+
+    // query templates
     static final String insertTag = "INSERT INTO tags " +
             "(Reader_Name, EPC, Antenna, Status, Station_Id, First_Read, Last_Read, Num_Reads) " +
             "VALUES (?,?,?,?,?,?,?,?)";
@@ -52,6 +58,9 @@ abstract class BaseTagController implements ApplicationListener<StationChangeEve
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
+    /**
+     * Update the station id mapper cache
+     */
     protected void updateStationIdMapper() {
         ConcurrentMap<String, StationCache> newIdMapper = new ConcurrentHashMap<>();
         jdbcTemplate.query(readerName2StationId, (ResultSetExtractor<Object>) rs -> {
@@ -80,6 +89,11 @@ abstract class BaseTagController implements ApplicationListener<StationChangeEve
         this.updateStationIdMapper();
     }
 
+    /**
+     * Queue up a tag for additional processing
+     * @param id station id for station where tag was read
+     * @param t tag details
+     */
     public static void enqueue(int id, QueuedTag t) {
         // lookup the id in the list
         Queue<QueuedTag> tag = tagQueue.get(id);
@@ -91,6 +105,13 @@ abstract class BaseTagController implements ApplicationListener<StationChangeEve
         tag.add(t);
     }
 
+    /**
+     * Lookup status from stations table (reader configuration)
+     * @param stationId id of station
+     * @param readerName name of reader
+     * @param antenna antenna
+     * @return status in reader configuration matching parameters or null if not found
+     */
     public String getStatus(int stationId, String readerName, int antenna) {
         AtomicReference<String> passed = new AtomicReference<>();
         jdbcTemplate.query(lookup_status,(ResultSetExtractor<Object>) rs -> {
@@ -104,7 +125,7 @@ abstract class BaseTagController implements ApplicationListener<StationChangeEve
 }
 
 /**
- * Restful interface for tags
+ * Restful interface for tag processing that does not return a thymeleaf template
  */
 @RestController
 class TagRestController extends BaseTagController {
@@ -127,7 +148,9 @@ class TagRestController extends BaseTagController {
     }
 
     /**
-     * Check queue for incoming event, return json string with event info if found, otherwise return empty string
+     * Check queue for incoming event
+     * @param id station id for station requesting event
+     * @return json string with event info, or empty string if not found
      */
     public String checkQueue(int id) {
         String result = "";

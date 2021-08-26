@@ -6,6 +6,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.security.Principal;
 
+/**
+ * Controller for handling html requests, primarily root and index requests
+ */
 @Controller
 public class HTMLController {
 

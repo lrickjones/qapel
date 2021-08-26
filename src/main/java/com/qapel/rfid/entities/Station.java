@@ -8,6 +8,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
+/**
+ * Station entity for JBA model used to manage station identification in station table
+ */
 @Entity
 @Table(name="station")
 public class Station {

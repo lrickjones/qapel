@@ -2,6 +2,9 @@ package com.qapel.rfid.entities;
 
 import lombok.*;
 
+/**
+ * Information to display in station report
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

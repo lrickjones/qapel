@@ -3,6 +3,8 @@ package com.qapel.rfid.controller;
 import com.qapel.rfid.entities.StationReport;
 import com.qapel.rfid.entities.Tag;
 import com.qapel.rfid.event.RefreshRepositoryEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.dao.DataAccessException;
@@ -19,11 +21,20 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Base controller for managing repository to support additional classes for thymeleaf and rest apis
+ * This uses the JdbcTemplate model for accessing the database
+ */
 @RequestMapping("/repository")
 abstract class TagRepositoryBaseController implements ApplicationListener<RefreshRepositoryEvent> {
+    // error logger
+    protected static final Logger logger = LoggerFactory.getLogger(ErrorController.class);
+
+    // spring boot will set up jdbcTemplate based on parameters in application.properties
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
+    // query templates
     private static final String getAll = "SELECT * FROM reader.tags LIMIT 20;";
     private static final String deleteId = "DELETE FROM reader.tags WHERE (id = ?)";
     private static final String getFromRepository = "SElECT * FROM reader.repository WHERE epc=? AND station_id=?";
@@ -35,6 +46,9 @@ abstract class TagRepositoryBaseController implements ApplicationListener<Refres
     protected static final String stationReport = "SELECT station.name, repository.epc, repository.final_status FROM " +
             "reader.repository INNER JOIN station ON repository.station_id=station.id";
 
+    /**
+     * Refresh the repository by reading the tags table and adding new tags to repository and updating existing tags
+     */
     public void refresh() {
         boolean stuffToDo = true;
         while (stuffToDo) {
@@ -61,7 +75,8 @@ abstract class TagRepositoryBaseController implements ApplicationListener<Refres
                     if (moveTagToRepository(tag)) {
                         jdbcTemplate.update(deleteId, tag.getId());
                     } else {
-                        //TODO Register error
+                        logger.error("Unable to move tag to repository - " + tag.getEpc() + ":" + tag.getReaderName()
+                        + ":" + tag.getAntenna() + " - Tag not removed from tags!");
                         stuffToDo = false;
                     }
                 }
@@ -111,7 +126,7 @@ abstract class TagRepositoryBaseController implements ApplicationListener<Refres
     }
 
     /**
-     * Listen for repository refresh events from controllers inside this sprint boot envionment
+     * Listen for repository refresh events from controllers inside this sprint boot environment
      * @param repositoryEvent RefreshRepositoryEvent
      */
     @Override
@@ -121,8 +136,18 @@ abstract class TagRepositoryBaseController implements ApplicationListener<Refres
 
 }
 
+/**
+ * Thymeleaf controller for repository reports
+ */
 @Controller
 class TagRepositoryHTMLController extends TagRepositoryBaseController {
+
+    /**
+     * List all the records in the repository
+     * @param response htmlservlettresponse (system)
+     * @param model page model
+     * @return station report page
+     */
     @GetMapping("/station_report")
     public String stationReport(HttpServletResponse response,
                           Model model) {
@@ -141,6 +166,9 @@ class TagRepositoryHTMLController extends TagRepositoryBaseController {
     }
 }
 
+/**
+ * Rest API calls for requests with no thymeleaf template
+ */
 @RestController
 class TagRepositoryRestController extends TagRepositoryBaseController {
     /**

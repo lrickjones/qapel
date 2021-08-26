@@ -4,6 +4,9 @@ import lombok.*;
 
 import java.sql.Timestamp;
 
+/**
+ * Information related to a tag for internal processing and display
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

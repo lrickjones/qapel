@@ -3,6 +3,9 @@ package com.qapel.rfid.entities;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 
+/**
+ * Stations entity setup as a JBA entity for managing reader configuration in stations table
+ */
 @Entity
 @Table(name="stations")
 public class ReaderConfiguration {

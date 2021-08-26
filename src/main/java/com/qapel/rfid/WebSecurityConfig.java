@@ -15,7 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 /**
- * Set up web security structure
+ * Set up web security structure, make sure resources like images and style sheets do not require authentication
+ * Username and password are set up at compile time here. When the time comes this will need to be changed to
+ * set them up at run time
  */
 @Configuration
 @EnableWebSecurity
